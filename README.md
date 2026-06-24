@@ -78,14 +78,12 @@ Sample test output:
 
 ## 📐 Smarter Scheduling
 
-> Fill in once you've implemented scheduling logic.
-
 | Feature | Method(s) | Notes |
 |---------|-----------|-------|
-| Task sorting | | e.g., by priority, duration |
-| Filtering | | e.g., skip tasks if time runs out |
-| Conflict handling | | e.g., overlapping time slots |
-| Recurring tasks | | e.g., daily vs. weekly |
+| Task sorting | sort_by_priority() | Sorts by priority, 1 is highest |
+| Filtering | filter_by_time() | Cumulative pass, drops tasks that exceed time budget |
+| Conflict handling | generate_schedule() | Greedy algorithm — high priority tasks go first |
+| Recurring tasks | Not yet implemented | Could add frequency field to Task in future |
 
 ## 📸 Demo Walkthrough
 
