@@ -16,6 +16,11 @@ class Task:
     duration: int
     priority: int  # priority 1 is highest; larger numbers are lower priority
     category: str
+    completed: bool = False
+
+    def mark_complete(self) -> None:
+        """Mark this task as completed."""
+        self.completed = True
 
 
 @dataclass
@@ -29,11 +34,11 @@ class Pet:
 
     def add_task(self, task: Task) -> None:
         """Add a task to this pet's task list."""
-        ...
+        self.tasks.append(task)
 
     def get_tasks(self) -> List[Task]:
         """Return all tasks associated with this pet."""
-        ...
+        return self.tasks
 
 
 class Owner:
@@ -50,11 +55,12 @@ class Owner:
         Sets ``pet.owner = self`` so the back-reference stays in sync with
         this owner's ``pets`` list (single source of truth).
         """
-        ...
+        self.pets.append(pet)
+        pet.owner = self
 
     def get_pets(self) -> List[Pet]:
         """Return all pets belonging to this owner."""
-        ...
+        return self.pets
 
 
 class Scheduler:
@@ -64,14 +70,19 @@ class Scheduler:
         self.pet = pet
         # Budget is derived from the owner so the two never drift apart.
         self.available_time = pet.owner.available_time
+        # Holds the priority-sorted tasks produced by ``sort_by_priority`` so
+        # ``filter_by_time`` can consume them without re-sorting.
+        self._sorted: List[Task] = []
 
     def generate_schedule(self) -> List[Task]:
         """Generate an ordered schedule of tasks that fits the time budget."""
-        ...
+        self.sort_by_priority()
+        return self.filter_by_time()
 
     def sort_by_priority(self) -> List[Task]:
         """Return the pet's tasks sorted by priority."""
-        ...
+        self._sorted = sorted(self.pet.get_tasks(), key=lambda task: task.priority)
+        return self._sorted
 
     def filter_by_time(self) -> List[Task]:
         """Return tasks that fit within the available time budget.
@@ -82,4 +93,10 @@ class Scheduler:
         its own does not mean the set fits together). Expects the tasks to
         already be sorted by priority.
         """
-        ...
+        scheduled: List[Task] = []
+        remaining = self.available_time
+        for task in self._sorted:
+            if task.duration <= remaining:
+                scheduled.append(task)
+                remaining -= task.duration
+        return scheduled
