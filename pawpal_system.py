@@ -14,7 +14,7 @@ class Task:
 
     name: str
     duration: int
-    priority: int
+    priority: int  # priority 1 is highest; larger numbers are lower priority
     category: str
 
 
@@ -45,7 +45,11 @@ class Owner:
         self.pets: List[Pet] = []
 
     def add_pet(self, pet: Pet) -> None:
-        """Add a pet to this owner's collection of pets."""
+        """Add a pet to this owner's collection of pets.
+
+        Sets ``pet.owner = self`` so the back-reference stays in sync with
+        this owner's ``pets`` list (single source of truth).
+        """
         ...
 
     def get_pets(self) -> List[Pet]:
@@ -56,9 +60,10 @@ class Owner:
 class Scheduler:
     """Builds a care schedule for a pet within an available time budget."""
 
-    def __init__(self, pet: Pet, available_time: int) -> None:
+    def __init__(self, pet: Pet) -> None:
         self.pet = pet
-        self.available_time = available_time
+        # Budget is derived from the owner so the two never drift apart.
+        self.available_time = pet.owner.available_time
 
     def generate_schedule(self) -> List[Task]:
         """Generate an ordered schedule of tasks that fits the time budget."""
@@ -69,5 +74,12 @@ class Scheduler:
         ...
 
     def filter_by_time(self) -> List[Task]:
-        """Return tasks that fit within the available time budget."""
+        """Return tasks that fit within the available time budget.
+
+        NOTE: This must do a *cumulative* pass — accumulate each task's
+        duration against a running total and stop once the budget is
+        exhausted. Do NOT filter tasks independently (each task fitting on
+        its own does not mean the set fits together). Expects the tasks to
+        already be sorted by priority.
+        """
         ...

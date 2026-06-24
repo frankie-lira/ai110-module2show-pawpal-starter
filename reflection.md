@@ -6,21 +6,24 @@
 
 - Briefly describe your initial UML design.
 
-My initial design has four main classes: Owner, Pet, Task, and Scheduler. Owner holds the pet owner's name and preferences. Pet holds the pet's name, type, and a list of tasks. Task holds the task name, duration, priority, and category. Scheduler takes a pet's tasks and available time and produces a sorted daily plan.
+My initial design has four main classes: Owner, Pet, Task, and Scheduler. Owner holds the pet owner's name and available time per day. Pet holds the pet's name, breed, a reference to its Owner, and a list of Tasks. Task is a dataclass holding the task name, duration in minutes, priority level, and category. Scheduler takes a Pet and available time and produces a sorted, filtered daily schedule.
 
 - What classes did you include, and what responsibilities did you assign to each?
 
-Owner — stores owner name and daily time available for pet care.
-Pet — stores pet name and breed, and holds a list of Task objects.
-Task — stores task name, duration in minutes, priority level, and category (walk, feeding, meds, etc.).
-Scheduler — takes the list of tasks and available time, sorts by priority, and generates a daily schedule.
+Owner — stores owner name and daily time available, holds a list of Pet objects.
+Pet — stores pet name and breed, holds a list of Task objects, and provides methods to add and retrieve tasks.
+Task — a dataclass that stores task name, duration, priority, and category. Pure data, no methods.
+Scheduler — takes a pet's task list and available time, sorts by priority, filters by time, and generates a daily schedule.
 
 **b. Design changes**
 
 - Did your design change during implementation?
+
+Yes, I made three design changes based on Claude Code's review of the skeleton.
+
 - If yes, describe at least one change and why you made it.
 
-To be filled in after implementation.
+The biggest change was removing available_time as a separate argument to Scheduler. Originally Scheduler took its own available_time int, which could drift out of sync with Owner.available_time. I changed it so Scheduler derives the budget directly from pet.owner.available_time. This ensures there is always one source of truth for how much time the owner has available.
 
 ---
 
