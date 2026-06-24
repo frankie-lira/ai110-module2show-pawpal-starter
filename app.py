@@ -1,6 +1,11 @@
 import streamlit as st
 
+from pawpal_system import Owner, Pet, Task, Scheduler
+
 st.set_page_config(page_title="PawPal+", page_icon="🐾", layout="centered")
+
+if "owner" not in st.session_state:
+    st.session_state.owner = Owner(name="Jordan", available_time=120)
 
 st.title("🐾 PawPal+")
 
@@ -38,10 +43,23 @@ At minimum, your system should:
 
 st.divider()
 
-st.subheader("Quick Demo Inputs (UI only)")
+st.subheader("Add a Pet")
 owner_name = st.text_input("Owner name", value="Jordan")
 pet_name = st.text_input("Pet name", value="Mochi")
 species = st.selectbox("Species", ["dog", "cat", "other"])
+
+if st.button("Add pet"):
+    st.session_state.owner.name = owner_name
+    pet = Pet(name=pet_name, breed=species, owner=st.session_state.owner)
+    st.session_state.owner.add_pet(pet)
+    st.success(f"Added {pet_name} to {owner_name}'s pets.")
+
+pets = st.session_state.owner.get_pets()
+if pets:
+    st.write("Current pets:")
+    st.table([{"name": p.name, "breed": p.breed} for p in pets])
+else:
+    st.info("No pets yet. Add one above.")
 
 st.markdown("### Tasks")
 st.caption("Add a few tasks. In your final version, these should feed into your scheduler.")
@@ -73,16 +91,45 @@ st.divider()
 st.subheader("Build Schedule")
 st.caption("This button should call your scheduling logic once you implement it.")
 
-if st.button("Generate schedule"):
-    st.warning(
-        "Not implemented yet. Next step: create your scheduling logic (classes/functions) and call it here."
-    )
-    st.markdown(
-        """
-Suggested approach:
-1. Design your UML (draft).
-2. Create class stubs (no logic).
-3. Implement scheduling behavior.
-4. Connect your scheduler here and display results.
-"""
-    )
+# priority 1 is highest; larger numbers are lower priority
+PRIORITY_MAP = {"high": 1, "medium": 2, "low": 3}
+
+pets = st.session_state.owner.get_pets()
+if not pets:
+    st.info("Add a pet above before generating a schedule.")
+else:
+    pet_names = [p.name for p in pets]
+    selected = st.selectbox("Schedule for pet", pet_names)
+
+    if st.button("Generate schedule"):
+        pet = next(p for p in pets if p.name == selected)
+
+        # Attach the UI-entered tasks to the selected pet.
+        pet.tasks = []
+        for t in st.session_state.tasks:
+            pet.add_task(
+                Task(
+                    name=t["title"],
+                    duration=t["duration_minutes"],
+                    priority=PRIORITY_MAP[t["priority"]],
+                    category="general",
+                )
+            )
+
+        scheduler = Scheduler(pet)
+        scheduled = scheduler.generate_schedule()
+
+        if scheduled:
+            st.success(f"Scheduled {len(scheduled)} task(s) for {pet.name}.")
+            st.table(
+                [
+                    {
+                        "name": task.name,
+                        "duration_minutes": task.duration,
+                        "priority": task.priority,
+                    }
+                    for task in scheduled
+                ]
+            )
+        else:
+            st.warning("No tasks fit within the available time budget.")
