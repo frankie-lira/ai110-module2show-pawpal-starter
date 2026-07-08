@@ -64,16 +64,37 @@ Mittens the Tabby:
 
 ```bash
 # Run the full test suite:
-pytest
-
-# Run with coverage:
-pytest --cov
+python -m pytest tests/test_pawpal.py -v
 ```
 
-Sample test output:
+Tests cover: task sorting by priority and time, conflict detection, time budget filtering, and completed task handling.
+
+**Confidence Level: ⭐⭐⭐⭐ (4/5)**
+All 17 tests pass. The scheduler handles edge cases like empty lists, zero budgets, and exact-fit tasks. The one known limitation is conflict detection only checks adjacent tasks, not all pairs.
 
 ```
-# Paste your pytest output here
+platform darwin -- Python 3.13.13, pytest-9.0.3
+collected 17 items
+
+tests/test_pawpal.py::test_mark_complete_sets_completed_true PASSED           [  5%]
+tests/test_pawpal.py::test_add_task_increases_task_count PASSED               [ 11%]
+tests/test_pawpal.py::test_sort_by_time_orders_timed_then_untimed PASSED      [ 17%]
+tests/test_pawpal.py::test_filter_by_time_skips_completed_tasks PASSED        [ 23%]
+tests/test_pawpal.py::test_find_conflicts_detects_overlap PASSED              [ 29%]
+tests/test_pawpal.py::test_find_conflicts_ignores_adjacent_and_untimed PASSED [ 35%]
+tests/test_pawpal.py::test_sort_by_priority_breaks_ties_by_shorter_duration PASSED [ 41%]
+tests/test_pawpal.py::test_sort_by_priority_is_stable_on_full_ties PASSED    [ 47%]
+tests/test_pawpal.py::test_sort_by_time_places_midnight_before_untimed PASSED [ 52%]
+tests/test_pawpal.py::test_sort_by_time_orders_untimed_among_themselves_by_priority PASSED [ 58%]
+tests/test_pawpal.py::test_sorts_handle_empty_task_list PASSED                [ 64%]
+tests/test_pawpal.py::test_find_conflicts_detects_identical_start_times PASSED [ 70%]
+tests/test_pawpal.py::test_find_conflicts_zero_duration_at_same_start_conflicts PASSED [ 76%]
+tests/test_pawpal.py::test_filter_by_time_skips_overflow_but_keeps_later_fitting_task PASSED [ 82%]
+tests/test_pawpal.py::test_filter_by_time_includes_exact_fit PASSED          [ 88%]
+tests/test_pawpal.py::test_filter_by_time_zero_budget_schedules_nothing PASSED [ 94%]
+tests/test_pawpal.py::test_filter_by_time_completed_task_frees_budget_for_later_task PASSED [100%]
+
+==================== 17 passed in 0.02s ====================
 ```
 
 ## 📐 Smarter Scheduling
@@ -89,12 +110,9 @@ Sample test output:
 
 ## 📸 Demo Walkthrough
 
-Describe your app in numbered steps so a reader can follow along without watching a video:
-
-1. <!-- Describe this step -->
-2. <!-- Describe this step -->
-3. <!-- Describe this step -->
-4. <!-- Describe this step -->
-5. <!-- Add more steps as needed -->
-
-**Screenshot or video** *(optional)*: <!-- Insert a screenshot or link to a demo video here -->
+1. User opens the app and sees the PawPal+ interface with an Add a Pet form
+2. User enters owner name "Frankie" and pet name "Miyuki" (cat), then clicks Add Pet
+3. Miyuki appears in the Current Pets table
+4. User adds tasks — Feed (20 min, high), Clean litter box (15 min, medium), Play time (30 min, low)
+5. User selects Miyuki from the Schedule for Pet dropdown and clicks Generate Schedule
+6. App displays the scheduled tasks in priority order with total time used
