@@ -108,6 +108,15 @@ tests/test_pawpal.py::test_filter_by_time_completed_task_frees_budget_for_later_
 | Conflict detection | find_conflicts() | Detects overlapping tasks by start time; adjacent comparison |
 | Schedule generation | generate_schedule() | Greedy algorithm — sorts by priority then filters by time |
 
+## 🎨 UI Formatting Features
+
+| Feature | Implementation | Notes |
+|---------|---------------|-------|
+| Category emojis | CATEGORY_EMOJI map in app.py | 🚶 exercise, 🍽️ feeding, 💊 meds, ✂️ grooming, 🎾 play, 🧹 cleaning |
+| Priority labels | PRIORITY_LABEL map in app.py | High/Medium/Low instead of 1/2/3 |
+| Conflict warnings | st.warning() | Shows which tasks overlap |
+| Schedule table | st.table() | Clean columns for task, duration, priority, category |
+
 ## 📸 Demo Walkthrough
 
 1. User opens the app and sees the PawPal+ interface with an Add a Pet form

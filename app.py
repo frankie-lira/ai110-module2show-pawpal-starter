@@ -4,6 +4,23 @@ from pawpal_system import Owner, Pet, Task, Scheduler
 
 st.set_page_config(page_title="PawPal+", page_icon="🐾", layout="centered")
 
+# Maps a task category to a representative emoji for the schedule display.
+CATEGORY_EMOJI = {
+    "exercise": "🚶",
+    "feeding": "🍽️",
+    "meds": "💊",
+    "grooming": "✂️",
+    "play": "🎾",
+    "cleaning": "🧹",
+    "general": "🐾",
+}
+
+
+def category_label(category: str) -> str:
+    """Return the category prefixed with its emoji (falls back to a paw)."""
+    emoji = CATEGORY_EMOJI.get(category, "🐾")
+    return f"{emoji} {category.capitalize()}"
+
 if "owner" not in st.session_state:
     st.session_state.owner = Owner(name="Jordan", available_time=120)
 
@@ -67,22 +84,45 @@ st.caption("Add a few tasks. In your final version, these should feed into your 
 if "tasks" not in st.session_state:
     st.session_state.tasks = []
 
-col1, col2, col3 = st.columns(3)
+col1, col2 = st.columns(2)
 with col1:
     task_title = st.text_input("Task title", value="Morning walk")
 with col2:
+    category = st.selectbox(
+        "Category",
+        ["exercise", "feeding", "meds", "grooming", "play", "cleaning", "general"],
+        format_func=category_label,
+    )
+
+col4, col5 = st.columns(2)
+with col4:
     duration = st.number_input("Duration (minutes)", min_value=1, max_value=240, value=20)
-with col3:
+with col5:
     priority = st.selectbox("Priority", ["low", "medium", "high"], index=2)
 
 if st.button("Add task"):
     st.session_state.tasks.append(
-        {"title": task_title, "duration_minutes": int(duration), "priority": priority}
+        {
+            "title": task_title,
+            "duration_minutes": int(duration),
+            "priority": priority,
+            "category": category,
+        }
     )
 
 if st.session_state.tasks:
     st.write("Current tasks:")
-    st.table(st.session_state.tasks)
+    st.table(
+        [
+            {
+                "Task": t["title"],
+                "Category": category_label(t.get("category", "general")),
+                "Duration (min)": t["duration_minutes"],
+                "Priority": t["priority"].capitalize(),
+            }
+            for t in st.session_state.tasks
+        ]
+    )
 else:
     st.info("No tasks yet. Add one above.")
 
@@ -93,6 +133,8 @@ st.caption("This button should call your scheduling logic once you implement it.
 
 # priority 1 is highest; larger numbers are lower priority
 PRIORITY_MAP = {"high": 1, "medium": 2, "low": 3}
+# Reverse lookup so the schedule table can show a readable priority label.
+PRIORITY_LABEL = {1: "High", 2: "Medium", 3: "Low"}
 
 pets = st.session_state.owner.get_pets()
 if not pets:
@@ -112,7 +154,7 @@ else:
                     name=t["title"],
                     duration=t["duration_minutes"],
                     priority=PRIORITY_MAP[t["priority"]],
-                    category="general",
+                    category=t.get("category", "general"),
                 )
             )
 
@@ -120,7 +162,7 @@ else:
         scheduled = scheduler.generate_schedule()
 
         if scheduled:
-            st.success(f"Scheduled {len(scheduled)} task(s) for {pet.name}.")
+            st.success(f"✅ Scheduled {len(scheduled)} task(s) for {pet.name}.")
 
             conflicts = scheduler.find_conflicts()
             if conflicts:
@@ -133,12 +175,13 @@ else:
             st.table(
                 [
                     {
-                        "name": task.name,
-                        "duration_minutes": task.duration,
-                        "priority": task.priority,
+                        "Task": task.name,
+                        "Duration (min)": task.duration,
+                        "Priority": PRIORITY_LABEL.get(task.priority, task.priority),
+                        "Category": category_label(task.category),
                     }
                     for task in sorted_tasks
                 ]
             )
         else:
-            st.warning("No tasks fit within the available time budget.")
+            st.warning("⚠️ No tasks fit within the available time budget.")
