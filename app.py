@@ -121,6 +121,15 @@ else:
 
         if scheduled:
             st.success(f"Scheduled {len(scheduled)} task(s) for {pet.name}.")
+
+            conflicts = scheduler.find_conflicts()
+            if conflicts:
+                for prev, curr in conflicts:
+                    st.warning(
+                        f"⚠️ Conflict: '{prev.name}' overlaps with '{curr.name}'."
+                    )
+
+            sorted_tasks = scheduler.sort_by_time()
             st.table(
                 [
                     {
@@ -128,7 +137,7 @@ else:
                         "duration_minutes": task.duration,
                         "priority": task.priority,
                     }
-                    for task in scheduled
+                    for task in sorted_tasks
                 ]
             )
         else:
