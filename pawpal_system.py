@@ -5,7 +5,7 @@ Method bodies are intentionally left unimplemented.
 """
 
 from dataclasses import dataclass, field
-from typing import List
+from typing import List, Optional, Tuple
 
 
 @dataclass
@@ -17,10 +17,20 @@ class Task:
     priority: int  # priority 1 is highest; larger numbers are lower priority
     category: str
     completed: bool = False
+    # Minutes since midnight (e.g. 8 * 60 == 8:00am). ``None`` means the task
+    # is unscheduled in time and is ordered after all timed tasks.
+    start_time: Optional[int] = None
 
     def mark_complete(self) -> None:
         """Mark this task as completed."""
         self.completed = True
+
+    @property
+    def end_time(self) -> Optional[int]:
+        """Minutes since midnight when this task ends, or ``None`` if untimed."""
+        if self.start_time is None:
+            return None
+        return self.start_time + self.duration
 
 
 @dataclass
@@ -80,9 +90,34 @@ class Scheduler:
         return self.filter_by_time()
 
     def sort_by_priority(self) -> List[Task]:
-        """Return the pet's tasks sorted by priority."""
-        self._sorted = sorted(self.pet.get_tasks(), key=lambda task: task.priority)
+        """Return the pet's tasks sorted by priority.
+
+        Ties are broken by shorter duration first so quick wins get scheduled
+        ahead of long tasks of equal priority.
+        """
+        self._sorted = sorted(
+            self.pet.get_tasks(), key=lambda task: (task.priority, task.duration)
+        )
         return self._sorted
+
+    def sort_by_time(self) -> List[Task]:
+        """Return the pet's tasks ordered chronologically by start time.
+
+        Untimed tasks (``start_time is None``) are placed after all timed
+        tasks, ordered among themselves by priority.
+        """
+        return sorted(
+            self.pet.get_tasks(),
+            key=lambda task: (
+                task.start_time is None,
+                task.start_time if task.start_time is not None else 0,
+                task.priority,
+            ),
+        )
+
+    def filter_by_completion(self, tasks: List[Task]) -> List[Task]:
+        """Return only the tasks that are not yet completed."""
+        return [task for task in tasks if not task.completed]
 
     def filter_by_time(self) -> List[Task]:
         """Return tasks that fit within the available time budget.
@@ -92,11 +127,30 @@ class Scheduler:
         exhausted. Do NOT filter tasks independently (each task fitting on
         its own does not mean the set fits together). Expects the tasks to
         already be sorted by priority.
+
+        Completed tasks are skipped entirely so they neither appear in the
+        schedule nor consume the time budget.
         """
         scheduled: List[Task] = []
         remaining = self.available_time
-        for task in self._sorted:
+        for task in self.filter_by_completion(self._sorted):
             if task.duration <= remaining:
                 scheduled.append(task)
                 remaining -= task.duration
         return scheduled
+
+    def find_conflicts(self) -> List[Tuple[Task, Task]]:
+        """Return pairs of timed tasks whose time ranges overlap.
+
+        Only tasks with a ``start_time`` are considered. Tasks are sorted
+        chronologically and each is compared against the previous one: an
+        overlap exists when a task begins before the previous one ends.
+        """
+        timed = [task for task in self.pet.get_tasks() if task.start_time is not None]
+        timed.sort(key=lambda task: task.start_time)
+
+        conflicts: List[Tuple[Task, Task]] = []
+        for prev, curr in zip(timed, timed[1:]):
+            if curr.start_time < prev.end_time:
+                conflicts.append((prev, curr))
+        return conflicts

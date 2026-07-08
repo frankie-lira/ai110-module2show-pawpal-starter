@@ -80,10 +80,12 @@ Sample test output:
 
 | Feature | Method(s) | Notes |
 |---------|-----------|-------|
-| Task sorting | sort_by_priority() | Sorts by priority, 1 is highest |
-| Filtering | filter_by_time() | Cumulative pass, drops tasks that exceed time budget |
-| Conflict handling | generate_schedule() | Greedy algorithm — high priority tasks go first |
-| Recurring tasks | Not yet implemented | Could add frequency field to Task in future |
+| Task sorting by priority | sort_by_priority() | Sorts by priority, 1 is highest; ties broken by shorter duration |
+| Task sorting by time | sort_by_time() | Chronological order; untimed tasks fall to the end |
+| Filtering by time budget | filter_by_time() | Cumulative pass, drops tasks that exceed available time |
+| Filtering completed tasks | filter_by_completion() | Skips tasks already marked complete |
+| Conflict detection | find_conflicts() | Detects overlapping tasks by start time; adjacent comparison |
+| Schedule generation | generate_schedule() | Greedy algorithm — sorts by priority then filters by time |
 
 ## 📸 Demo Walkthrough
 
